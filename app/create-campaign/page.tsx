@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
+import { Input, Textarea } from "@nextui-org/input";
 import { useState } from "react";
 import {
   useAccount,
@@ -19,7 +19,9 @@ import { sepolia } from "viem/chains";
 
 export default function CreateCampaignPage() {
   const [campaignGoal, setCampaignGoal] = useState<string>("1");
-  const [campaignMetadata, setCampaignMetadata] = useState<string>("");
+  const [campaignName, setCampaignName] = useState<string>("");
+  const [campaignDescription, setCampaignDescription] = useState<string>("");
+  //   const [campaignMetadata, setCampaignMetadata] = useState<string>("");
   const [campaignDuration, setCampaignDuration] = useState<string>("1");
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -36,6 +38,21 @@ export default function CreateCampaignPage() {
       await switchChainAsync({ chainId: sepolia.id });
     }
 
+    const campaignMetadata = {
+      name: campaignName,
+      description: campaignDescription,
+    };
+
+    const uploadResponse = await fetch("/api/upload", {
+      method: "POST",
+      body: JSON.stringify(campaignMetadata),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { campaignURI } = await uploadResponse.json();
+
     const campaignGoalAmount = parseUnits(campaignGoal, 6);
 
     const campaignStart = Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000);
@@ -48,7 +65,7 @@ export default function CreateCampaignPage() {
       address: CAMPAIGN_FACTORY_ADDRESS,
       args: [
         address,
-        campaignMetadata,
+        campaignURI,
         campaignGoalAmount,
         BigInt(campaignStart),
         BigInt(campaignEnd),
@@ -67,6 +84,21 @@ export default function CreateCampaignPage() {
       <h1 className="text-xl font-bold">Create campaign</h1>
       <Input
         isRequired
+        type="text"
+        label="Campaign Name"
+        className="max-w-xs"
+        value={campaignName}
+        onValueChange={(value) => setCampaignName(value)}
+      />
+      <Textarea
+        isRequired
+        label="Campaign Description"
+        value={campaignDescription}
+        onValueChange={(value) => setCampaignDescription(value)}
+        className="max-w-xs"
+      />
+      <Input
+        isRequired
         type="number"
         label="Campaign Goal (USDC)"
         className="max-w-xs"
@@ -74,14 +106,6 @@ export default function CreateCampaignPage() {
         defaultValue="1"
         value={campaignGoal}
         onValueChange={(value) => setCampaignGoal(value)}
-      />
-      <Input
-        isRequired
-        type="text"
-        label="Metadata URI"
-        className="max-w-xs"
-        value={campaignMetadata}
-        onValueChange={(value) => setCampaignMetadata(value)}
       />
       <Input
         isRequired

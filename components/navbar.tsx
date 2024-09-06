@@ -14,7 +14,6 @@ import { Link } from "@nextui-org/link";
 
 export default function AppNavbar() {
   const { address, isConnected } = useAccount();
-  console.log(address);
   const { connect } = useConnect();
 
   return (
